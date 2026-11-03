@@ -1,17 +1,30 @@
-# glowmap
+Update Glowmap 
 
-A new Flutter project.
+Tampilannya udah jadi sebagian, bisa dijalanin di Chrome / emulator. Link GitHub: (https://github.com/anjeli02/GLOWMAP-CAPSTONE.git)
 
-## Getting Started
+*Yang udah jadi:*
+- Beranda
+- Cek Kulit
+- Hasil Analisis
+- Cek Produk (scan komposisi)
+- Hasil Cek Produk
+- Rutinitas (bisa dicentang, ada progress bar)
+- Menu bawah udah bisa pindah-pindah halaman
 
-This project is a starting point for a Flutter application.
+*Yang belum ada (halaman):*
+- Riwayat (masih "menyusul")
+- Profil (masih  "menyusul")
+- Edukasi Kulit (kartunya di Beranda belum bisa dipencet)
+- Kuesioner Kulit (tombolnya sementara langsung ke hasil analisis)
 
-A few resources to get you started if this is your first Flutter project:
+*Yang belum ada (fungsi ini buat uas kan):*
+- Kamera & galeri belum nyambung, tombolnya cuma tampilan
+- Scan komposisi produk (OCR) belum ada
+- Model ML buat deteksi kulit belum ada
+- Simpan data belum ada, jadi produk yang di-bookmark belum muncul di Riwayat dan ilang kalau keluar halaman
+- Pengingat rutinitas belum bunyi, switch-nya cuma tampilan
+- Tombol lonceng dan share belum ada aksinya
+- Gambar produk & artikel masih ikon pengganti
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Catatan: semua teks, angka, dan nama produk di app masih contoh ya karna ini ui doank gasih, belum data asli.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.

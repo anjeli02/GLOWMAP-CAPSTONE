@@ -4,16 +4,19 @@ Tampilannya udah jadi sebagian, bisa dijalanin di Chrome / emulator. Link GitHub
 
 *Yang udah jadi:*
 - Beranda
+- Login
+- Register
 - Cek Kulit
 - Hasil Analisis
 - Cek Produk (scan komposisi)
 - Hasil Cek Produk
 - Rutinitas (bisa dicentang, ada progress bar)
 - Menu bawah udah bisa pindah-pindah halaman
+- Riwayat 
+- Profil
+- Chatbot
 
 *Yang belum ada (halaman):*
-- Riwayat (masih "menyusul")
-- Profil (masih  "menyusul")
 - Edukasi Kulit (kartunya di Beranda belum bisa dipencet)
 - Kuesioner Kulit (tombolnya sementara langsung ke hasil analisis)
 

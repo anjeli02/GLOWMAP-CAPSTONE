@@ -72,7 +72,7 @@ class CekProdukPage extends StatelessWidget {
             _scanPreview(),
             const SizedBox(height: 16),
 
-            // Tombol utama: pindai kemasan
+            // Tombol utama: pindai kemasan (tombol unggah galeri sudah dihapus)
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -86,21 +86,6 @@ class CekProdukPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Tombol kedua: unggah dari galeri
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _keHasil(context),
-                style: FilledButton.styleFrom(
-                  backgroundColor: kRoseLight,
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                icon: const Icon(Icons.photo_library_outlined, size: 18),
-                label: const Text('Unggah Foto dari Galeri'),
-              ),
-            ),
-            const SizedBox(height: 4),
             Center(
               child: TextButton.icon(
                 onPressed: () {},

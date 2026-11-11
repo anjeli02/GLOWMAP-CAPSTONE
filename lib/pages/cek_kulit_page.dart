@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../colors.dart';
+import '../widgets/glowmap_app_bar.dart';
 
 // Halaman Cek Kulit (tab ke-2). StatelessWidget karena belum ada data berubah.
 class CekKulitPage extends StatelessWidget {
@@ -12,33 +13,7 @@ class CekKulitPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kCream,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Glowmap',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            Text('Cek Kulit',
-                style: TextStyle(fontSize: 11, color: Colors.black54)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: kPeach,
-              child: Icon(Icons.person, color: kGreen),
-            ),
-          ),
-        ],
-      ),
+      appBar: const GlowmapAppBar(subtitle: 'Cek Kulit'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
@@ -75,7 +50,7 @@ class CekKulitPage extends StatelessWidget {
             _cameraPreview(),
             const SizedBox(height: 16),
 
-            // Tombol aksi
+            // Tombol aksi: hanya ambil foto langsung
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -86,19 +61,6 @@ class CekKulitPage extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.camera_alt_outlined, size: 18),
                 label: const Text('Ambil Foto Langsung'),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                icon: const Icon(Icons.photo_library_outlined, size: 18),
-                label: const Text('Pilih dari Galeri'),
               ),
             ),
             const SizedBox(height: 16),

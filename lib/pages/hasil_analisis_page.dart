@@ -1,312 +1,110 @@
 import 'package:flutter/material.dart';
 import '../colors.dart';
+import '../widgets/glowmap_app_bar.dart';
 import 'hasil_cek_produk_page.dart';
 
 // Warna khusus halaman ini. Diawali "_" artinya privat (hanya di file ini).
-const _kBrown = Color(0xFF7A3E39); // cokelat tua: tombol & teks aksen
-const _kRed = Color(0xFFC0392B); // merah: peringatan kulit sensitif
+const _kBrown = Color(0xFF7A3E39); // cokelat tua: teks & aksen
+const _kRed = Color(0xFFC0392B); // merah: label peringatan
 
-// Halaman hasil analisis kulit. Tampil DI DALAM tab Cek Kulit, jadi menu
-// bawah tetap terlihat. Dua fungsi dikirim dari MainShell:
-//  - onBack            : kembali ke halaman scan (panah back)
-//  - onLihatRutinitas  : tutup halaman ini lalu pindah ke tab Rutinitas
-class HasilAnalisisPage extends StatefulWidget {
-  const HasilAnalisisPage({
-    super.key,
-    required this.onBack,
-    required this.onLihatRutinitas,
-  });
+// Halaman Hasil Analisis. Tampil DI DALAM tab Cek Kulit (menu bawah tetap
+// terlihat) dan juga dibuka dari Riwayat ("Lihat detail").
+// onBack = fungsi dari pemanggil untuk kembali (panah di kiri atas).
+// StatelessWidget karena isi halaman belum ada yang berubah.
+class HasilAnalisisPage extends StatelessWidget {
+  const HasilAnalisisPage({super.key, required this.onBack});
 
   final VoidCallback onBack;
-  final VoidCallback onLihatRutinitas;
 
-  @override
-  State<HasilAnalisisPage> createState() => _HasilAnalisisPageState();
-}
-
-class _HasilAnalisisPageState extends State<HasilAnalisisPage> {
-  bool _saved = false; // riwayat screening sudah disimpan?
-  bool _productSaved = false; // produk rekomendasi sudah di-bookmark?
-
-  // Skor jerawat 0-100 (makin kecil makin baik). Nanti dari model ML.
-  final double _score = 28;
-
-  // Data keluhan prioritas: (judul, penjelasan, label)
-  static const _priorities = [
-    (
-      'Pori-pori Tersumbat & Sebum T-Zone',
-      'Penumpukan sebum alami di hidung dan dahi yang rentan komedo jika tidak dibersihkan dengan benar.',
-      'Prioritas Tinggi'
-    ),
-    (
-      'Kemerahan Reaktif di Pipi',
-      'Eritema ringan pada pipi akibat cuaca panas atau gesekan, membutuhkan bahan menenangkan.',
-      'Sensitif'
-    ),
-    (
-      'Dehidrasi Lapisan Kulit Luar (Mikro-kering)',
-      'Kurang kelembapan air meskipun permukaan tampak berkilau karena minyak berlebih.',
-      'Perlu Hidrasi'
-    ),
+  // Data bahan aktif: (nama, manfaat)
+  static const _bahan = [
+    ('Zinc PCA (0.5%)', 'Mengontrol produksi minyak alami'),
+    ('Azelaic Acid (10%)', 'Mengatasi jerawat & aman bumil'),
+    ('Niacinamide (1%)', 'Meredakan kemerahan & peradangan'),
   ];
 
-  // Data bahan aktif: (nama, label, subjudul, alasan, ikon)
-  static const _ingredients = [
-    (
-      'Niacinamide (2-4%)',
-      'Barrier-Friendly',
-      'Pengontrol Sebum & Anti-Inflamasi',
-      'Mengontrol kelebihan minyak di T-Zone dan menenangkan peradangan bekas jerawat tanpa merusak pertahanan alami kulit.',
-      Icons.ac_unit
-    ),
-    (
-      'Centella Asiatica (Cica)',
-      'Penenang Cepat',
-      'Penenang Reaktivitas Kulit',
-      'Meredakan kemerahan, memperkuat skin barrier yang reaktif, dan mempercepat pemulihan sel kulit yang teriritasi.',
-      Icons.eco_outlined
-    ),
-    (
-      'Hyaluronic Acid',
-      'Non-Komedogenik',
-      'Hidrasi Molekul Ringan',
-      'Mengunci hidrasi tanpa menyumbat pori atau memicu komedo, memulihkan kelembapan mikro-kering pada pipi.',
-      Icons.water_drop_outlined
-    ),
+  // Data produk: (nama, harga, kandungan)
+  static const _produk = [
+    ('Azarine Anti Acne Serum', 'Rp 75.000', 'Zinc PCA, Niacinamide'),
+    ('Avoskin Your Skin Bae', 'Rp 120.000', 'Azelaic Acid 10%'),
   ];
 
-  // Pesan singkat di bawah layar. hideCurrentSnackBar menutup pesan lama
-  // dulu supaya tidak menumpuk.
-  void _showMessage(String text) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(text), duration: const Duration(seconds: 1)),
+  // Gaya kartu putih yang dipakai bersama
+  BoxDecoration _kartu() => BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 4)),
+        ],
       );
-  }
-
-  void _toggleSave() {
-    setState(() => _saved = !_saved); // balik nilai true <-> false
-    _showMessage(_saved
-        ? 'Riwayat screening disimpan'
-        : 'Riwayat screening dihapus dari simpanan');
-  }
-
-  void _toggleProduct() {
-    setState(() => _productSaved = !_productSaved);
-    _showMessage(
-        _productSaved ? 'Produk disimpan' : 'Produk dihapus dari simpanan');
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      backgroundColor: kCream,
+      // AppBar bersama + panah kembali (memanggil onBack)
+      appBar: GlowmapAppBar(subtitle: 'Hasil Analisis', onBack: onBack),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _aiCard(),
+            const Text('Hasil Analisis Glowmap',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
             const SizedBox(height: 14),
-            _heroCard(),
+
+            // ===== 1. PROFIL & KONDISI KULIT =====
+            _profilKulit(),
             const SizedBox(height: 14),
-            _scoreCard(),
+
+            // ===== 2. DETEKSI KONDISI KHUSUS (Rule Engine) =====
+            _deteksiKhusus(),
             const SizedBox(height: 22),
 
-            // Judul "3 keluhan prioritas kulit"
-            const Row(
-              children: [
-                Icon(Icons.priority_high, size: 16, color: _kRed),
-                SizedBox(width: 2),
-                Expanded(
-                  child: Text('3 KELUHAN PRIORITAS KULIT',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: _kBrown)),
-                ),
-                Text('Fokus Perawatan',
-                    style: TextStyle(fontSize: 10, color: Colors.black54)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // for dengan index (i) supaya bisa menampilkan nomor 1, 2, 3
-            for (int i = 0; i < _priorities.length; i++) ...[
-              _priorityCard(i, _priorities[i]),
-              const SizedBox(height: 10),
-            ],
+            // ===== 3. REKOMENDASI BAHAN AKTIF =====
+            _judul('Rekomendasi Bahan Aktif', 'Machine Learning'),
+            const SizedBox(height: 10),
+            // for ... in = ulangi widget untuk setiap isi list
+            for (final b in _bahan) _barisBahan(b.$1, b.$2),
             const SizedBox(height: 14),
 
-            // Judul "Rekomendasi Bahan Aktif" + ikon labu di kanan
+            // ===== 4. KATALOG PRODUK LOKAL AMAN =====
+            _judul('Katalog Produk Lokal Aman', null),
+            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SerifTitle('Rekomendasi Bahan Aktif'),
-                      SizedBox(height: 2),
-                      Text(
-                        'Disesuaikan otomatis untuk menyeimbangkan barrier & sebum',
-                        style: TextStyle(fontSize: 11, color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: kRoseLight,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0x337A3E39)),
-                  ),
-                  child: const Icon(Icons.science_outlined,
-                      size: 18, color: _kBrown),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            for (final item in _ingredients) ...[
-              _ingredientCard(item),
-              const SizedBox(height: 10),
-            ],
-            const SizedBox(height: 14),
-
-            // Judul "Rekomendasi Produk Spesifik" + badge kecocokan
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SerifTitle('Rekomendasi Produk Spesifik'),
-                      SizedBox(height: 2),
-                      Text('Kecocokan formula berdasarkan profil kulit',
-                          style:
-                              TextStyle(fontSize: 11, color: Colors.black54)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _pill(Icons.check_circle_outline, 'Kecocokan 98%',
-                    bg: kGreenLight, fg: kGreen),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _productCard(),
-            const SizedBox(height: 22),
-
-            // Judul "Perbandingan Screening Sebelumnya" + badge progress
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: kRoseLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.trending_up,
-                      size: 18, color: _kBrown),
-                ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Perbandingan Screening Sebelumnya',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700)),
-                      Text('Screening Kedua vs 14 Hari Lalu (10 Nov)',
-                          style:
-                              TextStyle(fontSize: 10, color: Colors.black54)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _pill(Icons.arrow_upward, 'Progress +12%',
-                    bg: kGreenLight, fg: kGreen),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _compareCard(),
-            const SizedBox(height: 22),
-
-            // Tombol utama: kembali ke MainShell lalu buka tab Rutinitas
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: widget.onLihatRutinitas,
-                style: FilledButton.styleFrom(
-                  backgroundColor: _kBrown,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.event_note_outlined, size: 18),
-                    SizedBox(width: 8),
-                    Text('Lihat Rutinitas Skincare'),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward, size: 18),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Tombol kedua: simpan riwayat
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _toggleSave,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _kBrown,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                icon: Icon(
-                    _saved ? Icons.bookmark : Icons.bookmark_border,
-                    size: 18),
-                label: Text(
-                    _saved ? 'Riwayat Tersimpan' : 'Simpan Riwayat Screening'),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Catatan penting
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0x1A7A3E39)),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: _kBrown),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                        style:
-                            TextStyle(fontSize: 10.5, color: Colors.black54),
-                        children: [
-                          TextSpan(
-                              text: 'Catatan Penting: ',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87)),
-                          TextSpan(
-                              text:
-                                  'Hasil analisis ini merupakan perkiraan awal berbasis model Machine Learning offline Glowmap dan bukan merupakan diagnosis medis dokter spesialis kulit. Jika mengalami iritasi parah, segera konsultasikan ke dermatolog.'),
-                        ],
-                      ),
-                    ),
-                  ),
+                for (int i = 0; i < _produk.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  // Expanded = tiap kartu produk berbagi lebar sama rata
+                  Expanded(child: _kartuProduk(context, _produk[i])),
                 ],
+              ],
+            ),
+            const SizedBox(height: 22),
+
+            // ===== 5. PERBANDINGAN PROGRES KULIT =====
+            _perbandingan(),
+            const SizedBox(height: 24),
+
+            // ===== 6. TOMBOL SIMPAN KE JURNAL =====
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(content: Text('Tersimpan ke jurnal progres kulit')),
+                    );
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: kGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                ),
+                icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                label: const Text('Simpan ke Jurnal Progres Kulit'),
               ),
             ),
           ],
@@ -315,778 +113,273 @@ class _HasilAnalisisPageState extends State<HasilAnalisisPage> {
     );
   }
 
-  // ---------- App bar ----------
-  // Ada panah back (memanggil onBack), logo, judul + subjudul, lonceng, avatar.
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: kCream,
-      elevation: 0,
-      titleSpacing: 0, // rapatkan judul ke panah back
-      leading: IconButton(
-        onPressed: widget.onBack,
-        icon: const Icon(Icons.arrow_back),
-      ),
-      title: Row(
-        children: [
+  // ---------- Judul seksi (dengan keterangan kecil di kanan, opsional) ----------
+  Widget _judul(String teks, String? ket) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Flexible(
+          child: Text(teks,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+        ),
+        if (ket != null) ...[
+          const SizedBox(width: 8),
           Container(
-            width: 34,
-            height: 34,
-            decoration: const BoxDecoration(
-              color: kRoseLight,
-              shape: BoxShape.circle,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: kGreenLight,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.spa_outlined, color: _kBrown, size: 18),
-          ),
-          const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Hasil Analisis',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-              Text('Pemindaian Selesai ✓',
-                  style: TextStyle(fontSize: 10.5, color: _kBrown)),
-            ],
+            child: Text(ket,
+                style: const TextStyle(fontSize: 10, color: kGreen, fontWeight: FontWeight.w600)),
           ),
         ],
-      ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none_rounded),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(right: 16),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: kPeach,
-            child: Icon(Icons.person, color: kGreen),
-          ),
-        ),
       ],
     );
   }
 
-  // ---------- Kartu "Analisis AI Mandiri Selesai" ----------
-  Widget _aiCard() {
+  // ---------- Kartu profil & kondisi kulit ----------
+  Widget _profilKulit() {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: const BoxDecoration(
-              color: kRoseLight,
-              shape: BoxShape.circle,
-            ),
-            child:
-                const Icon(Icons.auto_awesome, size: 18, color: _kBrown),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ANALISIS AI MANDIRI SELESAI',
-                    style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        color: _kBrown)),
-                Text('Diproses On-Device Vision ML',
-                    style: TextStyle(fontSize: 11, color: Colors.black54)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          _pill(Icons.verified_outlined, '92% Keyakinan',
-              bg: kRoseLight, fg: _kBrown),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Kartu hero: hasil analisis utama ----------
-  Widget _heroCard() {
-    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [kRoseLight, kPeach],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: const Color(0x1A7A3E39)),
-      ),
+      decoration: _kartu(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Wrap = seperti Row, tapi turun baris otomatis kalau tidak muat
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _pill(Icons.favorite, 'Hasil Analisis Kulit Utama',
-                  bg: Colors.white, fg: _kBrown),
-              _pill(Icons.warning_amber_rounded,
-                  'Kulit Sensitif: Aktif / Reaktif',
-                  bg: const Color(0xFFFFE3E0), fg: _kRed),
-            ],
-          ),
-          const SizedBox(height: 14),
-          // fontFamily 'serif' = font berkait, seperti di desain
-          const Text('Kombinasi Cenderung Berminyak',
-              style: TextStyle(
-                  fontFamily: 'serif',
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15)),
-          const SizedBox(height: 10),
-          const Text(
-            'Produksi minyak tinggi terpusat di area T-zone, sedangkan bagian pipi mengalami dehidrasi ringan dan sangat reaktif terhadap faktor lingkungan atau formula eksfoliasi agresif.',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Kartu Acne Severity Score ----------
-  Widget _scoreCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: const BoxDecoration(
-                  color: kRoseLight,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.blur_on, size: 18, color: _kBrown),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Acne Severity Score',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700)),
-                    Text('Intensitas jerawat & lesi aktif',
-                        style:
-                            TextStyle(fontSize: 10.5, color: Colors.black54)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Skor di kanan + badge tingkat
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Text.rich = satu teks dengan beberapa gaya berbeda
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                            text: 'Skor ',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: _kBrown)),
-                        TextSpan(
-                            text: _score.round().toString(),
-                            style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: _kBrown)),
-                        const TextSpan(
-                            text: ' / 100',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.black54)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: kGreenLight,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: kGreen.withValues(alpha: 0.4)),
-                    ),
-                    child: const Text('Tingkat Rendah (Low)',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: kGreen)),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _severityBar(),
-          const SizedBox(height: 6),
-          // Tiga keterangan rentang skor, masing-masing mengambil 1/3 lebar
           const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text('0 - 30: Rendah / Ringan',
-                    style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: kGreen)),
-              ),
-              Expanded(
-                child: Text('31 - 65: Sedang',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 9, color: Colors.black54)),
-              ),
-              Expanded(
-                child: Text('66 - 100: Berat',
-                    textAlign: TextAlign.end,
-                    style: TextStyle(fontSize: 9, color: Colors.black54)),
-              ),
+              Icon(Icons.face_retouching_natural_outlined, size: 18, color: kGreen),
+              SizedBox(width: 8),
+              Text('Profil & Kondisi Kulit Anda',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 12),
-          // Kotak keterangan hasil deteksi
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: kCream,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x14000000)),
-            ),
-            child: const Text(
-              'Hanya terdeteksi komedo terbuka ringan & 2 titik beruntusan mikro non-inflamasi di area dahi. Tidak ada jerawat kistik aktif yang terdeteksi.',
-              style: TextStyle(fontSize: 11, color: Colors.black87),
-            ),
+          _barisInfo('Hasil AI', 'BERMINYAK • JERAWAT SEDANG', warna: kGreen, tebal: true),
+          _barisInfo('Usia', '19 - 24 Tahun'),
+          _barisInfo('Keluhan', 'Jerawat (Meradang)'),
+          _barisInfo('Sensitif', 'Tidak'),
+        ],
+      ),
+    );
+  }
+
+  // 1 baris "label : nilai"
+  Widget _barisInfo(String label, String nilai,
+      {Color warna = Colors.black87, bool tebal = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 70,
+            child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          ),
+          const Text(':  ', style: TextStyle(fontSize: 12, color: Colors.black54)),
+          Expanded(
+            child: Text(nilai,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: warna,
+                    fontWeight: tebal ? FontWeight.w800 : FontWeight.w500)),
           ),
         ],
       ),
     );
   }
 
-  // Bar gradasi hijau -> kuning -> merah, dengan penanda posisi skor.
-  Widget _severityBar() {
-    // LayoutBuilder memberi tahu lebar yang tersedia, supaya posisi
-    // penanda bisa dihitung dari persentase skor.
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final markerLeft = constraints.maxWidth * (_score / 100) - 7;
-        return SizedBox(
-          height: 16,
-          // Stack = menumpuk widget; Positioned = mengatur letaknya
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 4,
-                child: Container(
-                  height: 8,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF6FB57A),
-                        Color(0xFFF2CF7A),
-                        Color(0xFFE57373),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // Penanda posisi skor
-              Positioned(
-                left: markerLeft,
-                top: 1,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: kGreen, width: 3),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // ---------- Kartu keluhan prioritas (bernomor) ----------
-  Widget _priorityCard(int index, (String, String, String) item) {
+  // ---------- Kartu peringatan kondisi khusus (warna peach) ----------
+  Widget _deteksiKhusus() {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(),
-      child: Row(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: kPeach,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kRose.withValues(alpha: 0.6)),
+      ),
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Lingkaran nomor (index mulai dari 0, jadi ditambah 1)
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: kRoseLight,
-              shape: BoxShape.circle,
-            ),
-            child: Text('${index + 1}',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: _kBrown)),
-          ),
-          const SizedBox(width: 10),
+          Icon(Icons.warning_amber_rounded, color: _kBrown, size: 22),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(item.$1,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700)),
-                    ),
-                    const SizedBox(width: 6),
-                    // Label di kanan (Prioritas Tinggi / Sensitif / dst.)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: kRoseLight,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(item.$3,
-                          style: const TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: _kBrown)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(item.$2,
-                    style:
-                        const TextStyle(fontSize: 11, color: Colors.black54)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Kartu bahan aktif (dengan kotak "Alasan") ----------
-  Widget _ingredientCard((String, String, String, String, IconData) item) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: const BoxDecoration(
-                  color: kRoseLight,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(item.$5, color: _kBrown, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(item.$1,
-                              style: const TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w700)),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: kRoseLight,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(item.$2,
-                              style: const TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: _kBrown)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(item.$3,
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: _kBrown)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Kotak "Alasan: ..." (kata "Alasan:" ditebalkan)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: kRoseLight.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x1A7A3E39)),
-            ),
-            child: Text.rich(
-              TextSpan(
-                style: const TextStyle(fontSize: 11, color: Colors.black87),
-                children: [
-                  const TextSpan(
-                      text: 'Alasan: ',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                  TextSpan(text: item.$4),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Kartu produk spesifik ----------
-  Widget _productCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Placeholder foto produk + tulisan BPOM
-              Container(
-                width: 60,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: kRoseLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('BPOM',
-                        style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w800,
-                            color: _kBrown)),
-                    SizedBox(height: 2),
-                    Icon(Icons.medication_liquid_outlined,
-                        color: _kBrown, size: 28),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('AURA BOTANICA • SERUM WAJAH',
-                        style: TextStyle(fontSize: 9.5, color: Colors.brown)),
-                    SizedBox(height: 2),
-                    Text('Barrier Calming Recovery Serum',
-                        style: TextStyle(
-                            fontFamily: 'serif',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700)),
-                    SizedBox(height: 4),
-                    Text.rich(
+                Text('Deteksi Kondisi Khusus (Rule Engine)',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: _kBrown)),
+                SizedBox(height: 6),
+                Text.rich(
+                  TextSpan(
+                    style: TextStyle(fontSize: 12, height: 1.45, color: _kBrown),
+                    children: [
+                      TextSpan(text: 'Karena Anda sedang '),
+                      TextSpan(text: 'HAMIL', style: TextStyle(fontWeight: FontWeight.w800)),
                       TextSpan(
-                        children: [
-                          TextSpan(
-                              text: 'Rp 129.000 ',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: _kBrown)),
-                          TextSpan(
-                              text: '(30ml)',
-                              style: TextStyle(
-                                  fontSize: 10.5, color: Colors.black54)),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text('No. BPOM: NA18230199842',
-                        style: TextStyle(fontSize: 9.5, color: Colors.black54)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Kotak bahan kunci
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: kCream,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x14000000)),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.eco_outlined, size: 14, color: _kBrown),
-                    SizedBox(width: 6),
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          style: TextStyle(fontSize: 11),
-                          children: [
-                            TextSpan(
-                                text: 'Bahan Kunci: ',
-                                style:
-                                    TextStyle(fontWeight: FontWeight.w800)),
-                            TextSpan(
-                                text:
-                                    'Centella Asiatica 5%, Ceramide NP, Panthenol'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Kombinasi menenangkan tanpa alkohol & pewangi buatan, dirancang khusus mempercepat pemulihan reaktif.',
-                  style: TextStyle(fontSize: 10.5, color: Colors.black54),
+                          text:
+                              ', sistem otomatis menyaring & memblokir bahan aktif tidak aman (seperti Salicylic Acid & Benzoyl Peroxide) dan menggantinya dengan alternatif aman.'),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: FilledButton.icon(
-                    // Buka halaman Hasil Cek Produk yang sudah dibuat sebelumnya
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const HasilCekProdukPage()),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: kRoseLight,
-                      foregroundColor: _kBrown,
-                    ),
-                    icon: const Icon(Icons.open_in_new, size: 16),
-                    label: const Text('Lihat Detail Produk',
-                        style: TextStyle(fontSize: 12)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Tombol bookmark produk
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: OutlinedButton(
-                  onPressed: _toggleProduct,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    foregroundColor: _kBrown,
-                  ),
-                  child: Icon(
-                      _productSaved ? Icons.bookmark : Icons.bookmark_border,
-                      size: 20),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  // ---------- Kartu perbandingan screening ----------
-  Widget _compareCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _miniStat(
-                  'Skin Barrier',
-                  const Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                            text: '58 ',
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.black45,
-                                decoration: TextDecoration.lineThrough)),
-                        TextSpan(
-                            text: '68',
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: _kBrown)),
-                        TextSpan(
-                            text: ' / 100',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.black54)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _miniStat(
-                  'Jerawat & Kemerahan',
-                  const Text('Tingkat Rendah',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: _kBrown)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: kRoseLight.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x1A7A3E39)),
-            ),
-            child: const Text.rich(
-              TextSpan(
-                style: TextStyle(fontSize: 11, color: Colors.black87),
-                children: [
-                  TextSpan(
-                      text: 'Catatan Progress: ',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                  TextSpan(
-                      text:
-                          'Terjadi peningkatan ketahanan barrier yang nyata. Tekstur mikro-dehidrasi di pipi berangsur pulih dan frekuensi kemerahan berkurang sejak evaluasi 10 November.'),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Kotak kecil berisi label + nilai (dipakai di kartu perbandingan)
-  Widget _miniStat(String label, Widget value) {
+  // ---------- 1 baris bahan aktif (kotak hijau muda) ----------
+  Widget _barisBahan(String nama, String manfaat) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: kCream,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x14000000)),
+        color: kGreenLight,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(nama,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kGreen)),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text('- $manfaat',
+                style: const TextStyle(fontSize: 12, color: kGreen)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Kartu 1 produk ----------
+  Widget _kartuProduk(BuildContext context, (String, String, String) p) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: _kartu(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Placeholder gambar produk (nanti diganti Image.asset)
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: kPeach,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.water_drop_outlined, size: 20, color: _kBrown),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(p.$1,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(p.$2,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: kGreen)),
+          const SizedBox(height: 8),
+          const Text('Kandungan:', style: TextStyle(fontSize: 10, color: Colors.black54)),
+          const SizedBox(height: 2),
+          Text(p.$3, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              // Pindah ke halaman Hasil Cek Produk
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HasilCekProdukPage()),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: kGreen,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              child: const Text('Detail Produk', style: TextStyle(fontSize: 12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Perbandingan progres kulit (foto bulan lalu vs sekarang) ----------
+  Widget _perbandingan() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: kGreenLight.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(fontSize: 10, color: Colors.black54)),
-          const SizedBox(height: 4),
-          value,
+          const Row(
+            children: [
+              Icon(Icons.compare_outlined, size: 18, color: kGreen),
+              SizedBox(width: 8),
+              Text('Perbandingan Progres Kulit',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kGreen)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: _kolomFoto('FOTO\nBULAN LALU', 'AI: Jerawat Parah', kRoseLight, _kRed, Colors.black12)),
+              const SizedBox(width: 12),
+              Expanded(child: _kolomFoto('FOTO\nSEKARANG', 'AI: Jerawat Sedang', Colors.white, kGreen, kPeach)),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  // ---------- Pembantu tampilan ----------
-  // Chip kecil berbentuk pil (ikon + teks) dengan warna yang bisa diatur
-  Widget _pill(IconData icon, String text,
-      {Color bg = Colors.white, Color fg = _kBrown}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: fg),
-          const SizedBox(width: 4),
-          Text(text,
-              style: TextStyle(
-                  fontSize: 10.5, fontWeight: FontWeight.w600, color: fg)),
-        ],
-      ),
-    );
-  }
-
-  // Gaya kartu putih bersama (sama seperti di halaman lain)
-  BoxDecoration _cardDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: const [
-        BoxShadow(
-            color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 4)),
+  // 1 kolom: kotak foto + label hasil AI di bawahnya
+  Widget _kolomFoto(String judul, String label, Color labelBg, Color labelFg, Color fotoBg) {
+    return Column(
+      children: [
+        Container(
+          height: 120,
+          width: double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: fotoBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(judul,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54)),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: labelBg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(label,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: labelFg)),
+        ),
       ],
     );
-  }
-}
-
-// Judul bagian bergaya serif (font berkait seperti di desain).
-class _SerifTitle extends StatelessWidget {
-  const _SerifTitle(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-            fontFamily: 'serif', fontSize: 17, fontWeight: FontWeight.w700));
   }
 }

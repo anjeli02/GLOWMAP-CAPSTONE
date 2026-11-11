@@ -17,7 +17,7 @@ class ActiveIngredient {
   });
 }
 
-// StatefulWidget karena tombol bookmark/simpan bisa berubah status.
+// StatefulWidget karena tombol bookmark di AppBar bisa berubah status.
 class HasilCekProdukPage extends StatefulWidget {
   const HasilCekProdukPage({super.key});
 
@@ -60,7 +60,7 @@ class _HasilCekProdukPageState extends State<HasilCekProdukPage> {
     ),
   ];
 
-  // Dipanggil saat bookmark atau tombol Simpan ditekan.
+  // Dipanggil saat bookmark di AppBar ditekan.
   void _toggleSave() {
     setState(() => _saved = !_saved); // balik nilai true <-> false
     // SnackBar = pesan singkat yang muncul di bawah layar.
@@ -145,39 +145,8 @@ class _HasilCekProdukPageState extends State<HasilCekProdukPage> {
               const SizedBox(height: 10),
             ],
 
+            // (Tombol Simpan Produk & Pindai Lainnya sudah dihapus)
             const SizedBox(height: 6),
-            // Dua tombol aksi berdampingan
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _toggleSave,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: kRose,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    icon: Icon(_saved ? Icons.check : Icons.bookmark_border,
-                        size: 18),
-                    label: Text(_saved ? 'Tersimpan' : 'Simpan Produk'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    // Navigator.pop = tutup halaman ini, kembali ke halaman scan
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    icon:
-                        const Icon(Icons.document_scanner_outlined, size: 18),
-                    label: const Text('Pindai Lainnya'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
 
             // Disclaimer
             Container(

@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import '../colors.dart';
+import '../widgets/glowmap_app_bar.dart';
 
+// Satu langkah rutinitas skincare. Class ini hanya "wadah data"
+// (tidak ada status ceklis lagi, karena list hanya untuk dilihat).
 class RoutineStep {
   final String category;
   final String badge;
   final String name;
   final String desc;
   final IconData icon;
-  bool done;
 
-  RoutineStep({
+  const RoutineStep({
     required this.category,
     required this.badge,
     required this.name,
     required this.desc,
     required this.icon,
-    this.done = false,
   });
 }
 
+// StatefulWidget karena ada toggle Pagi/Malam dan Switch pengingat yang berubah.
 class RutinitasPage extends StatefulWidget {
   const RutinitasPage({super.key});
 
@@ -27,18 +29,18 @@ class RutinitasPage extends StatefulWidget {
 }
 
 class _RutinitasPageState extends State<RutinitasPage> {
-  bool _isMorning = true;
+  bool _isMorning = true; // true = tab Pagi, false = tab Malam
   bool _morningReminder = true;
   bool _nightReminder = true;
 
-  final List<RoutineStep> _morning = [
+  // Daftar langkah rutinitas pagi
+  final List<RoutineStep> _morning = const [
     RoutineStep(
       category: 'PEMBERSIH WAJAH (CLEANSER)',
       badge: 'Rutin',
       name: 'Gentle Low pH Gel Cleanser',
       desc: 'Membersihkan sisa minyak dan debu tanpa mengikis lapisan pelindung kulit.',
       icon: Icons.water_drop_outlined,
-      done: true,
     ),
     RoutineStep(
       category: 'TONER / ESSENCE (TONER)',
@@ -46,7 +48,6 @@ class _RutinitasPageState extends State<RutinitasPage> {
       name: 'Centella Soothing Essence Toner',
       desc: 'Menenangkan kemerahan dan menyiapkan kulit menyerap serum.',
       icon: Icons.opacity_outlined,
-      done: true,
     ),
     RoutineStep(
       category: 'SERUM PERAWATAN (SERUM)',
@@ -54,7 +55,6 @@ class _RutinitasPageState extends State<RutinitasPage> {
       name: 'Niacinamide 5% Barrier Serum',
       desc: 'Membantu mengontrol minyak, menyamarkan pori, dan memperkuat barrier kulit.',
       icon: Icons.science_outlined,
-      done: true,
     ),
     RoutineStep(
       category: 'PELEMBAP (MOISTURIZER)',
@@ -72,7 +72,8 @@ class _RutinitasPageState extends State<RutinitasPage> {
     ),
   ];
 
-  final List<RoutineStep> _night = [
+  // Daftar langkah rutinitas malam
+  final List<RoutineStep> _night = const [
     RoutineStep(
       category: 'PEMBERSIH MINYAK (OIL CLEANSER)',
       badge: 'Rutin',
@@ -103,14 +104,13 @@ class _RutinitasPageState extends State<RutinitasPage> {
     ),
   ];
 
+  // Getter: daftar yang ditampilkan mengikuti tab yang aktif
   List<RoutineStep> get _steps => _isMorning ? _morning : _night;
-  int get _doneCount => _steps.where((s) => s.done).length;
-  double get _progress => _steps.isEmpty ? 0 : _doneCount / _steps.length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar: const GlowmapAppBar(subtitle: 'Rutinitas'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
@@ -121,9 +121,8 @@ class _RutinitasPageState extends State<RutinitasPage> {
             _toggle(),
             const SizedBox(height: 14),
             _aiCard(),
-            const SizedBox(height: 14),
-            _progressCard(),
             const SizedBox(height: 20),
+            // Judul daftar + jumlah tahapan
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -137,6 +136,7 @@ class _RutinitasPageState extends State<RutinitasPage> {
               ],
             ),
             const SizedBox(height: 12),
+            // Satu kartu per langkah, dibuat lewat perulangan
             for (int i = 0; i < _steps.length; i++) ...[
               _stepCard(i, _steps[i]),
               const SizedBox(height: 10),
@@ -172,37 +172,6 @@ class _RutinitasPageState extends State<RutinitasPage> {
           ],
         ),
       ),
-    );
-  }
-
-  // ---------- App bar ----------
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: kCream,
-      elevation: 0,
-      title: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Glowmap',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          Text('Rutinitas',
-              style: TextStyle(fontSize: 11, color: Colors.black54)),
-        ],
-      ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none_rounded),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(right: 16),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: kPeach,
-            child: Icon(Icons.person, color: kGreen),
-          ),
-        ),
-      ],
     );
   }
 
@@ -249,12 +218,12 @@ class _RutinitasPageState extends State<RutinitasPage> {
 
   // ---------- Toggle Pagi / Malam ----------
   Widget _toggle() {
-    final morningDone = _morning.where((s) => s.done).length;
-    final nightDone = _night.where((s) => s.done).length;
-
-    Widget tab(String label, int done, int total, bool selected, bool morning) {
+    // Fungsi kecil di dalam fungsi: membuat satu tab (Pagi atau Malam).
+    // selected = tab ini sedang aktif, morning = tab ini adalah tab Pagi.
+    Widget tab(String label, bool selected, bool morning) {
       return Expanded(
         child: GestureDetector(
+          // Saat ditekan, ganti tab lalu gambar ulang layar
           onTap: () => setState(() => _isMorning = morning),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -273,9 +242,6 @@ class _RutinitasPageState extends State<RutinitasPage> {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: selected ? kGreen : Colors.black54)),
-                const SizedBox(width: 6),
-                Text('$done/$total',
-                    style: const TextStyle(fontSize: 11, color: Colors.black45)),
               ],
             ),
           ),
@@ -292,8 +258,8 @@ class _RutinitasPageState extends State<RutinitasPage> {
       ),
       child: Row(
         children: [
-          tab('Pagi Hari', morningDone, _morning.length, _isMorning, true),
-          tab('Malam Hari', nightDone, _night.length, !_isMorning, false),
+          tab('Pagi Hari', _isMorning, true),
+          tab('Malam Hari', !_isMorning, false),
         ],
       ),
     );
@@ -334,51 +300,7 @@ class _RutinitasPageState extends State<RutinitasPage> {
     );
   }
 
-  // ---------- Kartu progress ----------
-  Widget _progressCard() {
-    final sisa = _steps.length - _doneCount;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(_isMorning ? 'Progres Rutinitas Pagi' : 'Progres Rutinitas Malam',
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700)),
-              Text('${(_progress * 100).round()}% Selesai',
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: kGreen,
-                      fontWeight: FontWeight.w600)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: _progress,
-              minHeight: 8,
-              backgroundColor: kGreenLight,
-              valueColor: const AlwaysStoppedAnimation(kGreen),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            sisa == 0
-                ? 'Hebat! Semua langkah hari ini sudah selesai.'
-                : '$sisa langkah lagi untuk menutup sesi rutinitas hari ini',
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Kartu langkah ----------
+  // ---------- Kartu langkah (hanya tampilan, tanpa ceklis) ----------
   Widget _stepCard(int index, RoutineStep step) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -386,6 +308,7 @@ class _RutinitasPageState extends State<RutinitasPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Kotak ikon; warnanya bergantian hijau/peach (index genap/ganjil)
           Container(
             width: 46,
             height: 46,
@@ -423,34 +346,15 @@ class _RutinitasPageState extends State<RutinitasPage> {
                 ),
                 const SizedBox(height: 3),
                 Text(step.name,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        decoration:
-                            step.done ? TextDecoration.lineThrough : null,
-                        color: step.done ? Colors.black45 : Colors.black87)),
+                        color: Colors.black87)),
                 const SizedBox(height: 3),
                 Text(step.desc,
                     style:
                         const TextStyle(fontSize: 11, color: Colors.black54)),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => setState(() => step.done = !step.done),
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: step.done ? kGreen : Colors.transparent,
-                border: Border.all(
-                    color: step.done ? kGreen : Colors.black26, width: 1.5),
-              ),
-              child: step.done
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : null,
             ),
           ),
         ],
@@ -460,6 +364,7 @@ class _RutinitasPageState extends State<RutinitasPage> {
 
   // ---------- Pengingat ----------
   Widget _reminderCard() {
+    // Fungsi kecil untuk membuat satu baris pengingat (ikon, teks, Switch)
     Widget row(IconData icon, Color iconColor, String title, String time,
         bool value, ValueChanged<bool> onChanged) {
       return Row(
@@ -524,6 +429,7 @@ class _RutinitasPageState extends State<RutinitasPage> {
     );
   }
 
+  // Gaya kartu putih bersama
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
       color: Colors.white,

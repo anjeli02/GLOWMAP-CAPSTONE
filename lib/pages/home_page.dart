@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../colors.dart';
+import '../widgets/glowmap_app_bar.dart';
 import 'cek_produk_page.dart';
+import 'chat_page.dart';
 
 // Halaman Beranda. StatefulWidget karena ada Switch yang bisa on/off
 class HomePage extends StatefulWidget {
@@ -20,11 +22,13 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(), // bagian atas (logo, lonceng, avatar)
+      appBar: const GlowmapAppBar(subtitle: 'Beranda'),
+      // Bubble chat melayang di pojok kanan bawah (di atas menu bawah)
+      floatingActionButton: _chatBubble(),
       // SingleChildScrollView = membuat isi bisa di scroll kalau kepanjangan
       body: SingleChildScrollView(
         // fromLTRB = jarak dari Left, Top, Right, Bottom
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 90), // bawah dilebihkan supaya tidak tertutup bubble chat
         // Column = susun widget dari atas ke bawah
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, // rata kiri
@@ -50,52 +54,84 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ---------- App bar ----------
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: kCream,
-      elevation: 0,
-      titleSpacing: 16,
-      // title = bagian kiri: logo + tulisan Glowmap/Beranda
-      title: Row(
-        // Row = susun widget dari kiri ke kanan
-        children: [
-          // Container = kotak serbaguna (bisa diberi warna, ukuran, sudut bulat)
-          Container(
-            width: 36,
-            height: 36,
+  // ---------- Bubble chat melayang ----------
+  Widget _chatBubble() {
+    // Fungsi yang dipanggil saat balon atau tombol diketuk
+    void bukaChat() => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ChatPage()),
+        );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min, // tingginya secukupnya aja
+      crossAxisAlignment: CrossAxisAlignment.end, // rata kanan
+      children: [
+        // 1. Balon ucapan
+        GestureDetector(
+          onTap: bukaChat,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: kGreenLight,
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x26000000), blurRadius: 10, offset: Offset(0, 4)),
+              ],
             ),
-            child: const Icon(Icons.spa_outlined, color: kGreen, size: 20),
+            child: const Text('Tanya Glowie soal kulitmu',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
           ),
-          const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Glowmap',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-              Text('Beranda',
-                  style: TextStyle(fontSize: 11, color: Colors.black54)),
-            ],
-          ),
-        ],
-      ),
-      // actions = widget di sisi kanan AppBar
-      actions: [
-        IconButton(
-          onPressed: () {}, // () {} = fungsi kosong, belum ada aksi
-          icon: const Icon(Icons.notifications_none_rounded),
         ),
-        const Padding(
-          padding: EdgeInsets.only(right: 16),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: kPeach,
-            child: Icon(Icons.person, color: kGreen),
+
+        // 2. Ekor balon: kotak kecil diputar 45 derajat jadi berbentuk berlian,
+        // lalu digeser ke atas supaya separuhnya menyatu dengan balon.
+        Padding(
+          padding: const EdgeInsets.only(right: 24),
+          child: Transform.translate(
+            offset: const Offset(0, -6),
+            child: Transform.rotate(
+              angle: 0.785398, // 45 derajat (dalam radian)
+              child: Container(width: 12, height: 12, color: Colors.white),
+            ),
           ),
+        ),
+
+        // 3. Tombol bulat. Stack dipakai untuk menumpuk titik merah kecil
+        // (penanda "ada yang menunggu") di sudut kanan atas.
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Material(
+              color: kGreen,
+              elevation: 6,
+              shadowColor: const Color(0x66000000),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: bukaChat,
+                child: const SizedBox(
+                  width: 58,
+                  height: 58,
+                  child: Icon(Icons.chat_bubble_rounded,
+                      color: Colors.white, size: 26),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 2,
+              top: 2,
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: kRose,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
